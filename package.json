@@ -1,0 +1,12 @@
+{
+  "name": "nonce-generator",
+  "version": "1.0.0",
+  "description": "generate contract address starting with specific prefix",
+  "main": "index.js",
+  "author": "diehard",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.0"
+  }
+}
