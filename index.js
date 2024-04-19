@@ -1,32 +1,35 @@
-const ethers = require('ethers');
-require('dotenv').config();
+const { ethers } = require('ethers'); 
+const dotenv = require('dotenv');
+dotenv.config();
+
 // Configuration
 const targetPrefix = '1969';
 const providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545/'; // Change to your provider URL
-const privateKey = process.env.PRIVATE_KEY; // WARNING: Be careful with private keys!
+const privateKey = process.env.PK_key; // WARNING: Be careful with private keys!
 
 // Connect to Ethereum network
-const provider = new ethers.providers.JsonRpcProvider(providerUrl);
+const provider = new ethers.JsonRpcProvider(providerUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
 
 async function main() {
-    let currentNonce = await wallet.getTransactionCount();
+    let currentNonce = await provider.getTransactionCount(wallet.address);
+    console.log(`Current nonce is: ${currentNonce}`);
 
     // Function to send a zero-value transaction to increment the nonce
-    async function sendZeroValueTransaction() {
+    async function sendZeroValueTransaction(currentNonce) {
         const tx = {
             to: wallet.address, // Send to self to increment nonce without transferring ETH
-            value: ethers.utils.parseEther("0.0")
+            value: ethers.parseEther("0.0")
         };
         const sendResult = await wallet.sendTransaction(tx);
         await sendResult.wait();
-        console.log(`Sent zero-value tx to increment nonce, tx hash: ${sendResult.hash}`);
+        console.log(`Sent zero-value tx to increment nonce, tx hash: ${sendResult.hash}, nonce: ${currentNonce}`);
     }
 
     // Calculate how many zero-value transactions are needed
     let desiredNonce = currentNonce;
     while (true) {
-        const potentialAddress = ethers.utils.getContractAddress({ from: wallet.address, nonce: desiredNonce });
+        const potentialAddress = ethers.getCreateAddress({ from: wallet.address, nonce: desiredNonce });
         if (potentialAddress.slice(2).startsWith(targetPrefix)) {
             console.log(`Matching nonce found: ${desiredNonce}, potential address: ${potentialAddress}`);
             break;
@@ -36,7 +39,7 @@ async function main() {
 
     // Increment nonce by sending zero-value transactions
     while (currentNonce < desiredNonce) {
-        await sendZeroValueTransaction();
+        await sendZeroValueTransaction(currentNonce);
         currentNonce++;
     }
 
